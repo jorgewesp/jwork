@@ -1,0 +1,79 @@
+import java.net.*;
+import java.io.*;
+import java.util.*;
+
+public class ClienteTCP {
+  static Socket cliente;
+  private static int LIMITE = 10000000;
+  public static String serverBD = "200.137.75.124";
+  public static final int porta = 2424;
+  static String nomeArquivo;
+
+  public static void main(String[] args) throws UnknownHostException, IOException{
+    // TODO Auto-generated method stub
+    try {
+      cliente = new Socket(serverBD,porta);
+      System.out.println("Conectado");
+       InputStream dados = cliente.getInputStream();
+       Scanner entrada = new Scanner(dados);
+        // Lê o cabeçalho do servidor
+        while( entrada.hasNextLine() ){
+            System.out.println(entrada.nextLine());
+        }
+        entrada.close();
+
+// Inicia o processo de envio do arquivo
+          PrintStream resposta = new
+          PrintStream(cliente.getOutputStream());
+          if(args.length > 0){
+              nomeArquivo = args[0];
+          }
+          else{
+          nomeArquivo = "temp.png";
+          }
+          resposta.println("Iniciando transferência de arquivo:" + nomeArquivo);
+          File arquivo = new File(nomeArquivo);
+          if(arquivo.length() > LIMITE){
+              System.out.println("O arquivo ultrapassa o limite de 10MB!");
+              resposta.println("O arquivo ultrapassa o limite de 10MB!");
+              resposta.close();
+              entrada.close();
+              cliente.close();
+           }
+          else{
+              resposta.println("O arquivo tem um tamanho de " + arquivo.length() + " Bytes");
+              resposta.close();
+
+// Inicia a transferência do arquivo - Servidor run()!!
+              byte [] arquivoBytes = new byte[(int) arquivo.length()];
+              FileInputStream fis = new FileInputStream(arquivo);
+              BufferedInputStream bis = new BufferedInputStream(fis);
+              bis.read(arquivoBytes,0,arquivoBytes.length);
+              OutputStream saida = cliente.getOutputStream();
+              System.out.println("Enviando...");
+              saida.write(arquivoBytes,0,arquivoBytes.length);
+              saida.flush();
+              dados = cliente.getInputStream();
+              entrada = new Scanner(dados);
+              while( entrada.hasNextLine() ){
+              System.out.println(entrada.nextLine());
+              }
+              entrada.close();
+              bis.close();
+              cliente.close();
+          }
+}         
+        catch (UnknownHostException e) {
+
+// TODO Auto-generated catch block
+
+        e.printStackTrace();
+}        
+        catch (IOException e) {
+
+// TODO Auto-generated catch block
+
+         e.printStackTrace();
+         }
+      }
+}
